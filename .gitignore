@@ -1,0 +1,16 @@
+node_modules/
+.next/
+out/
+dist/
+.env.local
+.env.production
+.env.*.local
+*.tsbuildinfo
+next-env.d.ts
+coverage/
+test-results/
+playwright-report/
+prisma/migrations/
+prisma/dev.db
+prisma/dev.db-journal
+!.env.example
