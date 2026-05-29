@@ -2,15 +2,34 @@ import Redis from "ioredis";
 
 const globalForRedis = globalThis as unknown as { redis: Redis };
 
-export const redis =
-  globalForRedis.redis ??
-  new Redis(process.env.REDIS_URL || "redis://localhost:6379", {
-    maxRetriesPerRequest: 3,
-    retryStrategy: (times) => Math.min(times * 50, 2000),
-    enableOfflineQueue: true,
-  });
+function getRedisUrl() {
+  const url = process.env.REDIS_URL;
+  if (!url) {
+    if (process.env.NODE_ENV === "production") {
+      console.warn("REDIS_URL not set — caching disabled");
+      return null;
+    }
+    return "redis://localhost:6379";
+  }
+  return url;
+}
 
-if (process.env.NODE_ENV !== "production") globalForRedis.redis = redis;
+const redisUrl = getRedisUrl();
+
+export const redis =
+  redisUrl
+    ? globalForRedis.redis ??
+      new Redis(redisUrl, {
+        maxRetriesPerRequest: 3,
+        retryStrategy: (times) => Math.min(times * 50, 2000),
+        enableOfflineQueue: true,
+        lazyConnect: true,
+      })
+    : null;
+
+if (redis && process.env.NODE_ENV !== "production") {
+  globalForRedis.redis = redis;
+}
 
 export const CACHE_TTL = {
   PRODUCT: 300,

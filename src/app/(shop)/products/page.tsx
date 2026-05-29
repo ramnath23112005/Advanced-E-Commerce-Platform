@@ -8,9 +8,11 @@ import { redis, CACHE_KEYS, CACHE_TTL } from "@/lib/redis";
 async function getProducts(searchParams: Record<string, string>) {
   const { search, category, minPrice, maxPrice, sort, page, limit, rating } = parseSearchParams(new URLSearchParams(searchParams));
 
-  const cacheKey = CACHE_KEYS.products(JSON.stringify(searchParams));
-  const cached = await redis.get(cacheKey);
-  if (cached) return JSON.parse(cached);
+  if (redis) {
+    const cacheKey = CACHE_KEYS.products(JSON.stringify(searchParams));
+    const cached = await redis.get(cacheKey);
+    if (cached) return JSON.parse(cached);
+  }
 
   const where: Record<string, unknown> = { isActive: true };
 
@@ -62,7 +64,10 @@ async function getProducts(searchParams: Record<string, string>) {
   const totalPages = Math.ceil(total / limit);
   const result = { items, total, page, limit, totalPages, categories };
 
-  await redis.setex(cacheKey, CACHE_TTL.PRODUCT, JSON.stringify(result));
+  if (redis) {
+    const cacheKey = CACHE_KEYS.products(JSON.stringify(searchParams));
+    await redis.setex(cacheKey, CACHE_TTL.PRODUCT, JSON.stringify(result));
+  }
 
   return result;
 }

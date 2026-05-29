@@ -1,0 +1,69 @@
+services:
+  - type: web
+    name: luxe-api
+    env: node
+    plan: starter
+    buildCommand: npm install && npx prisma generate && npm run build
+    startCommand: npx prisma db push && npx next start
+    healthCheckPath: /api/health
+    envVars:
+      - key: NODE_ENV
+        value: production
+      - key: DATABASE_URL
+        fromDatabase:
+          name: luxe-db
+          property: connectionString
+      - key: DIRECT_URL
+        fromDatabase:
+          name: luxe-db
+          property: connectionString
+      - key: REDIS_URL
+        fromService:
+          type: redis
+          name: luxe-redis
+          property: connectionString
+      - key: NEXTAUTH_SECRET
+        generateValue: true
+      - key: NEXTAUTH_URL
+        value: https://luxe-app.vercel.app
+      - key: NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY
+        sync: false
+      - key: STRIPE_SECRET_KEY
+        sync: false
+      - key: STRIPE_WEBHOOK_SECRET
+        sync: false
+      - key: NEXT_PUBLIC_CLOUDINARY_CLOUD_NAME
+        sync: false
+      - key: CLOUDINARY_API_KEY
+        sync: false
+      - key: CLOUDINARY_API_SECRET
+        sync: false
+      - key: RESEND_API_KEY
+        sync: false
+
+  - type: worker
+    name: luxe-queue-worker
+    env: node
+    plan: starter
+    buildCommand: npm install
+    startCommand: npx tsx queue/worker.ts
+    envVars:
+      - key: REDIS_URL
+        fromService:
+          type: redis
+          name: luxe-redis
+          property: connectionString
+      - key: DATABASE_URL
+        fromDatabase:
+          name: luxe-db
+          property: connectionString
+
+databases:
+  - name: luxe-db
+    plan: starter
+    region: singapore
+
+redis:
+  - name: luxe-redis
+    plan: starter
+    region: singapore

@@ -9,11 +9,13 @@ const nextConfig: NextConfig = {
       { protocol: "https", hostname: "images.unsplash.com" },
     ],
   },
-  output: "standalone",
   experimental: {
     serverActions: {
       bodySizeLimit: "5mb",
     },
+  },
+  outputFileTracingIncludes: {
+    "/*": ["./node_modules/.prisma/**/*"],
   },
   headers: async () => [
     {

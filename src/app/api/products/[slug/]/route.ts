@@ -6,10 +6,12 @@ export async function GET(req: NextRequest, { params }: { params: Promise<{ slug
   try {
     const { slug } = await params;
 
-    const cacheKey = CACHE_KEYS.product(slug);
-    const cached = await redis.get(cacheKey);
-    if (cached) {
-      return NextResponse.json(JSON.parse(cached), { headers: { "X-Cache": "HIT" } });
+    if (redis) {
+      const cacheKey = CACHE_KEYS.product(slug);
+      const cached = await redis.get(cacheKey);
+      if (cached) {
+        return NextResponse.json(JSON.parse(cached), { headers: { "X-Cache": "HIT" } });
+      }
     }
 
     const product = await prisma.product.findUnique({
@@ -31,7 +33,10 @@ export async function GET(req: NextRequest, { params }: { params: Promise<{ slug
       return NextResponse.json({ error: "Product not found" }, { status: 404 });
     }
 
-    await redis.setex(cacheKey, CACHE_TTL.PRODUCT, JSON.stringify(product));
+    if (redis) {
+      const cacheKey = CACHE_KEYS.product(slug);
+      await redis.setex(cacheKey, CACHE_TTL.PRODUCT, JSON.stringify(product));
+    }
 
     return NextResponse.json(product);
   } catch (error) {

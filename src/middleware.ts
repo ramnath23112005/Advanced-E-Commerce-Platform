@@ -10,17 +10,13 @@ export default withAuth(
       return NextResponse.redirect(new URL("/login?error=unauthorized", req.url));
     }
 
-    if (path.startsWith("/dashboard") && !token) {
-      return NextResponse.redirect(new URL("/login", req.url));
-    }
-
     return NextResponse.next();
   },
   {
     callbacks: {
       authorized: ({ token, req }) => {
         const path = req.nextUrl.pathname;
-        if (path.startsWith("/admin") || path.startsWith("/dashboard") || path.startsWith("/checkout")) {
+        if (path.startsWith("/admin") || path.startsWith("/checkout")) {
           return !!token;
         }
         return true;
@@ -30,5 +26,5 @@ export default withAuth(
 );
 
 export const config = {
-  matcher: ["/admin/:path*", "/dashboard/:path*", "/checkout/:path*"],
+  matcher: ["/admin/:path*", "/checkout/:path*"],
 };

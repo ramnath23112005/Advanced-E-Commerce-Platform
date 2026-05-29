@@ -15,12 +15,14 @@ export async function GET(req: NextRequest) {
     const rating = searchParams.get("rating") ? Number(searchParams.get("rating")) : undefined;
     const featured = searchParams.get("featured") === "true";
 
-    const cacheKey = CACHE_KEYS.products(searchParams.toString());
-    const cached = await redis.get(cacheKey);
-    if (cached) {
-      return NextResponse.json(JSON.parse(cached), {
-        headers: { "X-Cache": "HIT" },
-      });
+    if (redis) {
+      const cacheKey = CACHE_KEYS.products(searchParams.toString());
+      const cached = await redis.get(cacheKey);
+      if (cached) {
+        return NextResponse.json(JSON.parse(cached), {
+          headers: { "X-Cache": "HIT" },
+        });
+      }
     }
 
     const where: Record<string, unknown> = { isActive: true };
@@ -87,7 +89,10 @@ export async function GET(req: NextRequest) {
       hasPrevPage: page > 1,
     };
 
-    await redis.setex(cacheKey, CACHE_TTL.PRODUCT, JSON.stringify(response));
+    if (redis) {
+      const cacheKey = CACHE_KEYS.products(searchParams.toString());
+      await redis.setex(cacheKey, CACHE_TTL.PRODUCT, JSON.stringify(response));
+    }
 
     return NextResponse.json(response);
   } catch (error) {

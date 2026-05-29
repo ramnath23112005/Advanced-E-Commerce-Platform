@@ -1,0 +1,19 @@
+{
+  "framework": "nextjs",
+  "regions": ["iad1"],
+  "buildCommand": "npx prisma generate && next build",
+  "outputDirectory": ".next",
+  "installCommand": "npm install",
+  "git": {
+    "deploymentEnabled": {
+      "main": true,
+      "develop": true
+    }
+  },
+  "crons": [
+    {
+      "path": "/api/cron/cleanup",
+      "schedule": "0 0 * * *"
+    }
+  ]
+}

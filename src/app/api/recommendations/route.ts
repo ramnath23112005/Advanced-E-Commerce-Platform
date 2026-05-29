@@ -4,9 +4,11 @@ import { redis, CACHE_KEYS, CACHE_TTL } from "@/lib/redis";
 
 export async function GET() {
   try {
-    const cached = await redis.get(CACHE_KEYS.featured);
-    if (cached) {
-      return NextResponse.json(JSON.parse(cached));
+    if (redis) {
+      const cached = await redis.get(CACHE_KEYS.featured);
+      if (cached) {
+        return NextResponse.json(JSON.parse(cached));
+      }
     }
 
     const products = await prisma.product.findMany({
@@ -19,7 +21,9 @@ export async function GET() {
       },
     });
 
-    await redis.setex(CACHE_KEYS.featured, CACHE_TTL.PRODUCT, JSON.stringify(products));
+    if (redis) {
+      await redis.setex(CACHE_KEYS.featured, CACHE_TTL.PRODUCT, JSON.stringify(products));
+    }
 
     return NextResponse.json(products);
   } catch {
